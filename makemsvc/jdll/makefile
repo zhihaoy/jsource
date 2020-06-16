@@ -184,7 +184,7 @@ OBJS=  \
 ifdef NO_SHA_ASM
 CFLAGS1= /DNO_SHA_ASM
 else
-ifdef x64
+ifeq (1,${x64})
 OBJS_ASM= \
  ../../openssl-asm/keccak1600-x86_64-nasm.o \
  ../../openssl-asm/sha1-x86_64-nasm.o \
@@ -215,11 +215,11 @@ endif
 %.o: %.asm
 	$(ML) $(ASMFLAGS) /Fo$@ /c $<
 
-ifdef x64
-ifdef JAVX2
+ifeq (1,${x64})
+ifeq (1,${AVX2})
 TARGET= javx2.dll
 else
-ifdef JAVX
+ifeq (1,${AVX})
 TARGET= javx.dll
 else
 TARGET= j.dll
