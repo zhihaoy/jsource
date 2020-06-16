@@ -1,29 +1,27 @@
-ifeq (1,${AVX})
+ifeq (1,${JAVX2})
+FAVX2= /DC_AVX=1 /DC_AVX2=1 /arch:AVX2
+else
+ifeq (1,${JAVX})
 FAVX= /DC_AVX=1 /arch:AVX
 endif
-ifeq (1,${AVX2})
-FAVX2= /DC_AVX=1 /DC_AVX2=1 /arch:AVX2
+endif
+ifeq (1,${USE_OPENMP})
+FOPENMP= /openmp
 endif
 ifeq (1,${DEBUG})
-FDEBUG = /FS /Zi
+FDEBUG = /FS /Zi /DDEBUG=1
 LDEBUG = /DEBUG
-endif
-ifeq (1,${USE_THREAD})
-FUSE_THREAD = /DUSE_THREAD
-endif
-ifeq (1,${VERBOSELOG})
-FVERBOSELOG = /DVERBOSELOG
 endif
 
 ifeq (1,${x64})
-CFLAGS= ${FDEBUG} /D_JDLL /DC_NA=0 ${FAVX} ${FAVX2} ${FUSE_THREAD} ${FVERBOSELOG} /WX /W3 /O2 /GS /Zc:strictStrings /D_USING_V110_SDK71_ /D_CRT_SECURE_NO_WARNINGS /MT
-FLAGS= ${LDEBUG} /DLL /NOLOGO /MACHINE:X64 /SUBSYSTEM:WINDOWS,5.02
+CFLAGS= ${FDEBUG} /D_JDLL /DC_NA=0 ${FAVX} ${FAVX2} ${FOPENMP} /WX /W3 /Ot /Ob1 /GS /Zc:strictStrings /D_USING_V110_SDK71_ /D_CRT_SECURE_NO_WARNINGS /MT
+FLAGS= ${LDEBUG} /DLL /MACHINE:X64 /SUBSYSTEM:WINDOWS,5.02
 ASMFLAGS= /Cx
 else
 # /Og fail g310r
 # /Oy crash ]^:_"1[0
-CFLAGS= ${FDEBUG} /D_JDLL ${FAVX} ${FAVX2} ${FUSE_THREAD} ${FVERBOSELOG} /WX /WX /W3 /Ot /Oy- /GS /Zc:strictStrings /D_USING_V110_SDK71_ /D_CRT_SECURE_NO_WARNINGS /MT
-FLAGS= ${LDEBUG} /DLL /NOLOGO /MACHINE:X86 /SUBSYSTEM:WINDOWS,5.01
+CFLAGS= ${FDEBUG} /D_JDLL ${FOPENMP} /WX /W3 /Ot /Ob1 /Oy- /GS /Zc:strictStrings /D_USING_V110_SDK71_ /D_CRT_SECURE_NO_WARNINGS /MT
+FLAGS= ${LDEBUG} /DLL /MACHINE:X86 /SUBSYSTEM:WINDOWS,5.01
 ASMFLAGS= /Cx /coff
 endif
 
@@ -216,10 +214,10 @@ endif
 	$(ML) $(ASMFLAGS) /Fo$@ /c $<
 
 ifeq (1,${x64})
-ifeq (1,${AVX2})
+ifeq (1,${JAVX2})
 TARGET= javx2.dll
 else
-ifeq (1,${AVX})
+ifeq (1,${JAVX})
 TARGET= javx.dll
 else
 TARGET= j.dll

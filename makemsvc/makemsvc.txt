@@ -72,11 +72,14 @@ run the batch file vcvars32.bat in vs2013 vc\bin folder
 1. build jconsole.exe
 cd jconsole
 nmake -f makefile.win clean
-nmake -f makefile.win
+nmake -f makefile.win x64=0
 cd ..
 
 2. build j.dll
-same as for jconsole but cd into jdll
+cd jdll
+nmake -f makefile.win clean
+nmake -f makefile.win x64=0
+cd ..
 
 3. build tsdll.dll -  used in test suite to validate cd
 same as for jconsole but cd into tsdll
