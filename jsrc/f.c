@@ -3,6 +3,12 @@
 /*                                                                         */
 /* Format: ": Monad                                                        */
 
+#ifdef _WIN32
+#include <windows.h>
+#include <winbase.h>
+#include <wchar.h>
+#pragma comment(lib,"user32.lib")
+#endif
 #include "j.h"
 
 // in xu.c
@@ -861,6 +867,29 @@ F2(jtoutstr){I*v;
  R jprx(v[0],v[1],v[2],v[3],w);
 }
 
+static F1(jnote)
+{
+  A z;
+#if SY_WIN32
+  HWND notepad = FindWindow(NULL, "Untitled - Notepad");
+  // Retry with modified title
+  if (notepad == NULL)
+    notepad = FindWindow(NULL, "*Untitled - Notepad");
+  HWND edit = FindWindowEx(notepad, NULL, "EDIT", NULL);
+  RZ(edit);
+  RZ(z = toutf16x(w));
+  size_t len = AN(z);
+  wchar_t* buf;
+  if ((buf = MALLOC((len + 2) * sizeof(wchar_t)))) {
+    wmemcpy(buf, USAV(z), len);
+    wcscpy_s(buf + len - 1, 3, L"\r\n");
+    SendMessageW(edit, EM_REPLACESEL, TRUE, (LPARAM)buf);
+    FREE(buf);
+  }
+#endif
+  R0;
+}
+
 // w is a noun.  Convert it to a UTF-8 string and write it to the console
 static F1(jtjpr1){PROLOG(0002);A z;
  // convert the character array to a null-terminated UTF-8 string
@@ -873,6 +902,7 @@ static F1(jtjpr1){PROLOG(0002);A z;
 #endif
   ASSERTSYS(!CAV(z)[AN(z)],"jtjpr1 trailing null byte");
   jsto(jt,jt->mtyo==0?MTYOFM:jt->mtyo,CAV(z));
+  jnote(jt, z);
  }
  EPILOG(mtm);
 }
