@@ -156,6 +156,17 @@ F2(jtjfappend){B b;F f;
  RNE(mtm);
 }
 
+F2(jttextfappend) {
+ F f;
+ F2RANK(RMAX,0,jttextfappend,0);
+ ASSERT(!AN(a)||AT(a)&LIT+C2T+C4T,EVDOMAIN);
+ ASSERT(1>=AR(a),EVRANK);
+ RZ(f=jope(w,"a"));
+ wa(f,fsize(f),a);
+ fclose(f);
+ RNE(mtm);
+}
+
 F1(jtjfsize){B b;F f;I m;
  F1RANK(0,jtjfsize,DUMMYSELF);
  RE(f=stdf(w));

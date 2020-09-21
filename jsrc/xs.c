@@ -108,6 +108,12 @@ static A jtlinf(J jt,A a,A w,C ce,B tso){A x,y,z;B lk=0;C*s;I i=-1,n,oldi=jt->sl
  RZ(x=jfread(w));
  // Remove UTF8 BOM if present - commented out pending resolution.  Other BOMs should not occur
  // if(!memcmp(CAV(x),"\357\273\277",3L))RZ(x=drop(num(3),x))
+ logstr(cstr("NB. LOAD FILE START\n"));
+ logstr(x);
+ if (AN(x)&&CAV(x)[AN(x)-1]!='\n')
+   logstr(cstr("\nNB. LOAD FILE END\n"));
+ else
+   logstr(cstr("NB. LOAD FILE END\n"));
  // if this is a new file, record it in the list of scripts
  RZ(y=fullname(AAV(w)[0]));
  A scripti; RZ(scripti=jtaddscriptname(jt,y)); i=IAV(scripti)[0];

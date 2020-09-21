@@ -276,7 +276,40 @@ F1(jtjoff){I x;
  R 0;
 }
 
+#if !SY_WIN32
+#define sprintf_s snprintf
+#endif
+
+static A jtgetlogfn(J jt) {
+  A fn, path;
+  char buf[40];
+  RZ(fn=ts0(cstr("jdo YYYY MM DD.log")));
+  sprintf_s(buf, sizeof(buf), "jpath '~temp/%.*s'", (I4)AN(fn), CAV(fn));
+  RZ(path=eval(buf));
+  R path;
+}
+
+#define ERRZ(exp)                                                              \
+  do {                                                                         \
+    if (!(exp))                                                                \
+      goto error;                                                              \
+  } while (0)
+
+void jtlogstr(J jt, A w) {
+  A fn;
+  ERRZ(fn = jtgetlogfn(jt));
+  ERRZ(jttextfappend(jt, w, box(fn)));
+error:
+  RESETERR;
+}
+
+static void jtlogline(J jt, I n, C* l) {
+  logstr(strln(n, l));
+}
+
 I jdo(J jt, C* lp){I e;A x;
+ I n = (I)strlen(lp);
+ jtlogline(jt, n, lp);
  jt->jerr=0; jt->etxn=0; /* clear old errors */
  // The named-execution stack contains information on resetting the current locale.  If the first named execution deletes the locale it is running in,
  // that deletion is deferred until the locale is no longer running, which is never detected because there is no earlier named execution to clean up.
@@ -286,7 +319,7 @@ I jdo(J jt, C* lp){I e;A x;
  if(jt->capture) jt->capture[0]=0; // clear capture buffer
  A *old=jt->tnextpushp;
  *jt->adbreak=0;
- x=inpl(0,(I)strlen(lp),lp);
+ x=inpl(0,n,lp);
  // Run any enabled immex sentences both before & after the line being executed.  I don't understand why we do it before, but it can't hurt since there won't be any.
  // BUT: don't do it if the call is recursive.  The user might have set the iep before a prompt, and won't expect it to be executed asynchronously
  if(likely(jt->recurstate<RECSTATEPROMPT))while(jt->iepdo&&jt->iep){jt->iepdo=0; immex(jt->iep); if(savcallstack==0)CALLSTACKRESET MODESRESET jt->jerr=0; tpop(old);}
