@@ -1104,6 +1104,8 @@
     <ClCompile Include="..\..\jsrc\k.c" />
     <ClCompile Include="..\..\jsrc\m.c" />
     <ClCompile Include="..\..\jsrc\mbx.c" />
+    <ClCompile Include="..\..\jsrc\npy.c" />
+    <ClCompile Include="..\..\jsrc\npydict.c" />
     <ClCompile Include="..\..\jsrc\p.c" />
     <ClCompile Include="..\..\jsrc\pv.c" />
     <ClCompile Include="..\..\jsrc\px.c" />
@@ -1235,6 +1237,7 @@
     <ClInclude Include="..\..\jsrc\jt.h" />
     <ClInclude Include="..\..\jsrc\jtype.h" />
     <ClInclude Include="..\..\jsrc\m.h" />
+    <ClInclude Include="..\..\jsrc\npydict.h" />
     <ClInclude Include="..\..\jsrc\p.h" />
     <ClInclude Include="..\..\jsrc\result.h" />
     <ClInclude Include="..\..\jsrc\va.h" />

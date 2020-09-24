@@ -1,0 +1,117 @@
+%prefix "npydict"
+%header
+{
+  #include "j.h"
+
+  struct npydict
+  {
+    I descr;
+    _Bool fortran_order;
+    A shape;
+  };
+
+  typedef struct
+  {
+    J jt;
+    A s;
+    I at;
+    struct npydict d;
+  } j_args_t;
+}
+
+%value "I"
+%auxil "j_args_t *"
+
+%source
+{
+  #define PCC_GETCHAR(auxil)                                                   \
+    (auxil->at < AN(auxil->s) ? CAV(auxil->s)[auxil->at++] : EOF)
+  #define PCC_ERROR(auxil)
+
+  #undef shape
+  #define shape(x)                                                             \
+    do {                                                                       \
+      auxil->d.shape = (x);                                                    \
+    } while (0)
+
+  #define descr(x)                                                             \
+    do {                                                                       \
+      auxil->d.descr = (x);                                                    \
+    } while (0)
+
+  #define fortran_order(x)                                                     \
+    do {                                                                       \
+      auxil->d.fortran_order = (x);                                            \
+    } while (0)
+
+  #define constant(e) jtsc(auxil->jt, e)
+  #define rank0(e) ja_rank0(auxil, e)
+  #define rankN(e) ja_rankN(auxil, e)
+  #define rank()                                                               \
+    do {                                                                       \
+      AN(auxil->d.shape) = AS(auxil->d.shape)[0];                              \
+    } while (0)
+
+  static int ja_rank0(j_args_t *auxil, I e)
+  {
+    J jt = auxil->jt;
+    GAT0(auxil->d.shape, INT, 8, 1);
+    AV(auxil->d.shape)[0] = e;
+    AS(auxil->d.shape)[0] = 1;
+    R 1;
+  }
+
+  static void ja_rankN(j_args_t *auxil, I e)
+  {
+    J jt = auxil->jt;
+    I len = AS(auxil->d.shape)[0];
+    if (len == AN(auxil->d.shape))
+    {
+      shape(ext(1, auxil->d.shape));
+      AS(auxil->d.shape)[0] = len;
+    }
+    AV(auxil->d.shape)[AS(auxil->d.shape)[0]++] = e;
+  }
+}
+
+dict <- _ '{' _ pairlist _ ','? _ '}' _ EOL
+
+pairlist <- pair ( _ ',' _ pair )*
+
+pair <- descrinfo
+      / shapeinfo
+      / fortranorderinfo
+
+descrinfo <- "'descr'" _ ':' _ "'" typestr "'"
+
+typestr <- "|b1"  { descr(B01); }
+         / "|u1"  { descr(LIT); }
+         / "<i8"  { descr(INT); }
+         / "<f8"  { descr(FL); }
+         / "<c16" { descr(CMPX); }
+         / "<u2"  { descr(C2T); }
+         / "<u4"  { descr(C4T); }
+
+fortranorderinfo <- "'fortran_order'" _ ':' _ boolean
+
+boolean <- "True"  { fortran_order(1); }
+         / "False" { fortran_order(0); }
+
+shapeinfo <- "'shape'" _ ':' _ shapetuple
+
+shapetuple <- '(' _ ')'                   { shape(aqq); }
+            / '(' _ e:integer _ ',' _ ')' { shape(constant(e)); }
+            / '(' _ ranklist _ ')'        { rank(); }
+
+ranklist <- e:integer { rank0(e); }
+  ( _ ',' _ e:integer { rankN(e); } )+
+
+integer <- [1-9] [0-9]*
+{
+  $$ = atoll($0);
+}
+
+_      <- ' '*
+EOL    <- '\n'
+
+%%

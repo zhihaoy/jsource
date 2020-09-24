@@ -66,6 +66,8 @@ OBJS=  \
  k.o \
  m.o \
  mbx.o \
+ npy.o \
+ npydict.o \
  p.o \
  pv.o \
  px.o \

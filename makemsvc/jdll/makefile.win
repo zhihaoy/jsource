@@ -107,6 +107,8 @@ OBJS=  \
  ../../jsrc/k.o \
  ../../jsrc/m.o \
  ../../jsrc/mbx.o \
+ ../../jsrc/npy.o \
+ ../../jsrc/npydict.o \
  ../../jsrc/p.o \
  ../../jsrc/pv.o \
  ../../jsrc/px.o \
