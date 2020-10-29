@@ -1347,6 +1347,8 @@ copy $(outdir)$(targetname).dll $(userprofile)\jbld\j64\bin\javx2.dll</Command>
     <ClInclude Include="..\..\jsrc\a.h" />
     <ClInclude Include="..\..\jsrc\d.h" />
     <ClInclude Include="..\..\jsrc\dd.h" />
+    <ClInclude Include="..\..\jsrc\dragonbox\dragonbox.h" />
+    <ClInclude Include="..\..\jsrc\ja.h" />
     <ClInclude Include="..\..\jsrc\jversion.h" />
     <ClInclude Include="..\..\jsrc\j.h" />
     <ClInclude Include="..\..\jsrc\jc.h" />
