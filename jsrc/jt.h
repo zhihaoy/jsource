@@ -258,7 +258,7 @@ typedef struct {
  PM0* pmu;              /* perf. monitor: (PM0)AV(pma)                     */
  PM*  pmv;              /* perf. monitor: (PM*)(sizeof(PM0)+CAV(pma))      */
  I    pos[2];           /* boxed output x-y positioning                    */
- C    pp[8];            // print precision (sprintf field for numeric output)
+ C    pp;               /* print precision                                 */
  A    p4792;            // pointer to p: i. 4792, filled in on first use
  I    redefined;        /* symbol table entry of redefined explicit defn   */
  I    sbfillfactor;     /* SB for binary tree                              */

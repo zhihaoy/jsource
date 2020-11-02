@@ -1188,6 +1188,9 @@ copy $(outdir)$(targetname).dll $(userprofile)\jbld\j64\bin\javx2.dll</Command>
     <ClCompile Include="..\..\jsrc\ct.c" />
     <ClCompile Include="..\..\jsrc\cu.c" />
     <ClCompile Include="..\..\jsrc\cv.c" />
+    <ClCompile Include="..\..\jsrc\cvr.cpp">
+      <AdditionalOptions>$(LlvmArchitectureSwitch) $(ClangClAdditionalOptions) /std:c++17 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="..\..\jsrc\cx.c" />
     <ClCompile Include="..\..\jsrc\d.c" />
     <ClCompile Include="..\..\jsrc\dc.c" />

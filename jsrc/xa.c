@@ -145,15 +145,14 @@ F1(jtposs){I n,p,q,*v;
  R mtv;
 }
 
-F1(jtppq){C*end;I k;
+F1(jtppq){
  ASSERTMTV(w);
- k = strtoI(3+jt->pp, (char**)&end, 10);
- R sc(k);
+ R sc(jt->pp);
 }
 
 F1(jtpps){I k;
- RE(sc(k=i0(w))); ASSERT(0<k,EVDOMAIN); ASSERT(k<=NPP,EVLIMIT);
- sprintf(3+jt->pp,FMTI"g", k);
+ RE(sc(k=i0(w))); ASSERT(0<k,EVDOMAIN); ASSERT(k==22||k<=NPP,EVLIMIT);
+ jt->pp=k;
  R mtv;
 }
 

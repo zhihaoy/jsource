@@ -57,9 +57,9 @@ static FMTF(jtfmtD,D){B q;C buf[1+WD],c,*t;D x=*v;I k=0;
  if(!memcmpne(v,&inf, SZD)){strcpy(s,"_" ); R;}  // require exact bitmatch
  if(!memcmpne(v,&infm,SZD)){strcpy(s,"__"); R;}
  if(_isnan(*v)          ){strcpy(s,"_."); R;}
-// x=*v; x=x==*(D*)minus0?0.0:x;  /* -0 to 0*/
+ if(jt->pp==22){dtoaroundtrip(sizeof(buf),s,x); R;}
  x=*v; x=x==(-1)*0.0?0.0:x;  /* -0 to 0*/
- sprintf(buf,jt->pp,x);
+ dtoafixed(sizeof(buf),buf,x,jt->pp);
  c=*buf; if(q=c=='-')*s++=CSIGN; q=q|(c=='+');
  if('.'==buf[q])*s++='0';
  MC(s,buf+q,WD+1-q);
