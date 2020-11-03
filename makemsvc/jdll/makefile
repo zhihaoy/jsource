@@ -45,6 +45,7 @@ CFLAGS= ${FDEBUG} /D_JDLL ${FOPENMP} ${FSLEEF} /WX /W3 /O2 /GS /Zc:strictStrings
 FLAGS= ${LDEBUG} /DLL /MACHINE:X86 /SUBSYSTEM:WINDOWS,5.01
 ASMFLAGS= /Cx /coff
 endif
+CXXFLAGS= /std:c++17
 
 .SUFFIXES: .o
 
@@ -87,6 +88,7 @@ OBJS=  \
  ../../jsrc/ct.o \
  ../../jsrc/cu.o \
  ../../jsrc/cv.o \
+ ../../jsrc/cvr.o \
  ../../jsrc/cx.o \
  ../../jsrc/d.o \
  ../../jsrc/dc.o \
@@ -250,7 +252,7 @@ endif
 	$(CC) $(CFLAGS) $(CFLAGS1) /Fo$@ /c $<
 
 %.o: %.cpp
-	$(CC) $(CFLAGS) /Fo$@ /c $<
+	$(CC) $(CFLAGS) $(CXXFLAGS) /Fo$@ /c $<
 
 %.o: %.asm
 	$(ML) $(ASMFLAGS) /Fo$@ /c $<
