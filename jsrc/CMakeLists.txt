@@ -36,6 +36,7 @@ target_sources(j PRIVATE
     jversion.h
     linenoise.h
     m.h
+    npydict.h
     p.h
     result.h
     s.h
@@ -89,9 +90,11 @@ target_sources(j PRIVATE
     ct.c
     cu.c
     cv.c
+    cvr.cpp
     cx.c
     d.c
     dc.c
+    dragonbox/dragonbox.h
     dss.c
     dstop.c
     dsusp.c
@@ -107,6 +110,8 @@ target_sources(j PRIVATE
     k.c
     m.c
     mbx.c
+    npy.c
+    npydict.c
     p.c
     pv.c
     px.c
