@@ -172,7 +172,7 @@ F2(jtnpysave)
   ASSERT(BOX & AT(w), EVDOMAIN);
 
   // add .npy extension and open the file
-  RZ(w = box(fullnamenpy(AAV0(w))));
+  RZ(w = box(fullnamenpy(AAV(w)[0])));
   RZ(f = jope(w, FWRITE_O));
 
   // form header
@@ -276,7 +276,7 @@ F1(jtnpyload)
   ASSERT(BOX & AT(w), EVDOMAIN);
 
   // add .npy extension and open the file
-  RZ(w = box(fullnamenpy(AAV0(w))));
+  RZ(w = box(fullnamenpy(AAV(w)[0])));
   RZ(f = jope(w, FREAD_O));
 
   struct npyheader h;
