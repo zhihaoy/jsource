@@ -2168,7 +2168,7 @@ F2(jtless){A x=w;I ar,at,k,r,*s,wr,*ws,wt;
  // if nothing special (like sparse, or incompatible types, or x requires conversion) do the fast way; otherwise (-. x e. y) # y
  // because LESS allocates a large array to hold all the values, we use the slower, less memory-intensive, version if a is mapped
  RZ(x=(NEGIFHOMO(at,wt)&((TYPESXOR(at,maxtyped(at,wt))|(at&SPARSE)|(AFLAG(a)&AFNJA))-1))<0?indexofsub(ILESS,x,a):
-     repeat(not(eps(a,x)),a));
+     repeat(notop(eps(a,x)),a));
  // We extracted from a, so mark it (or its backer if virtual) non-pristine.  If a was pristine and inplaceable, transfer its pristine status to the result
  PRISTXFERAF(x,a)
  RETF(x);

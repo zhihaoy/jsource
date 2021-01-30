@@ -126,7 +126,7 @@ static F1(jtipoly){A b,c,e,p=0,q=0,x;I n,t;
  RZ(e=plus(zeroionei(1),irs1(x,0L,1L,jttail)));
  RZ(b=ne(e,zeroionei(0)));
  if(!all0(b))RZ(p=amp(box(repeat(b,stitch(divide(c,e),e))),ds(CPOLY)));
- if(!all1(b))RZ(q=evc(not(b),c,"(+/x#y)&*@^."));
+ if(!all1(b))RZ(q=evc(notop(b),c,"(+/x#y)&*@^."));
  R p&&q?folk(p,ds(CPLUS),q):p?p:q;
 }
 

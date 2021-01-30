@@ -736,7 +736,7 @@
 #define nodupgrade(x0,x1,x2,x3,x4,x5,x6,x7,x8)      jtnodupgrade(jt,(x0),(x1),(x2),(x3),(x4),(x5),(x6),(x7),(x8))
 #define nor(x,y)                    jtatomic2(jt,(x),(y),ds(CPLUSCO))  
 #define norm(x)                     jtnorm(jt,(x))  
-#define not(x)                      jtnot(jt,(x))
+#define notop(x)                    jtnot(jt,(x))
 #define notonupperstack(x)          jtnotonupperstack(jt,(x))
 #define nub(x)                      jtnub(jt,(x))     
 #define nubi(x)                     jtnubi(jt,(x))     
