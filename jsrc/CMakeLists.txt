@@ -274,7 +274,11 @@ if(JNI_FOUND)
     )
 endif()
 
-pybind11_add_module(jruntime THIN_LTO)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
+
+pybind11_add_module(jruntime)
+set_target_properties(jruntime PROPERTIES
+    INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 target_sources(jruntime PRIVATE
     jlib.h
     jruntime.cc)
