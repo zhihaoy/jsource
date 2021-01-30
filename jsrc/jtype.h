@@ -9,8 +9,12 @@
 #define _stdcall      
 #endif
 
+#ifndef JRUNTIME_API
+#define JRUNTIME_API
+#endif
+
 #ifdef _WIN32
-#define CDPROC
+#define CDPROC JRUNTIME_API
 #elif defined(__GNUC__)
 #define CDPROC __attribute__ ((visibility ("default")))
 #else
@@ -52,7 +56,6 @@ typedef unsigned int       UINT;
 typedef int                I4;
 typedef unsigned int       UI4;
 typedef double             D;
-typedef float              DS;
 typedef FILE*              F;
 
 typedef long double        LD;

@@ -273,3 +273,9 @@ if(JNI_FOUND)
         ../makemsvc/jnative/jnative.def
     )
 endif()
+
+pybind11_add_module(jruntime THIN_LTO)
+target_sources(jruntime PRIVATE
+    jlib.h
+    jruntime.cc)
+target_link_libraries(jruntime PRIVATE j)

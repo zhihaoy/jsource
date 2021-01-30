@@ -38,6 +38,7 @@ endif()
 find_package(StandardMathLibrary REQUIRED)
 find_package(OpenMP)
 find_package(JNI)
+find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
 set(TARGET_ARCHITECTURE "skylake" CACHE STRING "CPU architecture")
 OptimizeForArchitecture()
@@ -82,6 +83,7 @@ add_compile_options($<$<COMPILE_LANG_AND_ID:C,AppleClang,Clang>:-Wno-missing-bra
 add_compile_options($<$<COMPILE_LANG_AND_ID:C,AppleClang,Clang>:-Wno-unknown-pragmas>)
 add_compile_options($<$<COMPILE_LANG_AND_ID:CXX,AppleClang,Clang>:-Wno-delete-non-abstract-non-virtual-dtor>)
 
+add_subdirectory(pybind11)
 add_subdirectory(jsrc)
 add_subdirectory(sleef)
 add_subdirectory(base64)
