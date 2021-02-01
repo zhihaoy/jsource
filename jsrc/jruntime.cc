@@ -30,7 +30,11 @@ PYBIND11_MODULE(jruntime, m)
     )";
 
   py::class_<JST, std::unique_ptr<JST, deleter>>(m, "Session")
-    .def(py::init([]() { return JInit(); }));
+    .def(py::init([]() {
+      auto jt = JInit();
+      JSMX(jt, nullptr, nullptr, nullptr, nullptr, SMOPTMTH);
+      return jt;
+    }));
 
   m.attr("__version__") = "0.1.0";
 }
