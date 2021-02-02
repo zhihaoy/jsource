@@ -40,17 +40,33 @@ namespace py = pybind11;
 
 using namespace pybind11::literals;
 
+constexpr auto joutput = [](J, int, C* s) {
+  py::print(reinterpret_cast<char*>(s), "end"_a = "");
+};
+
+constexpr auto jinput = [](J jt, C* s) {
+  static std::string buf;
+  buf.assign(py::module_::import(PYBIND11_BUILTINS_MODULE)
+               .attr("input")(reinterpret_cast<char*>(s))
+               .cast<std::string>());
+  return reinterpret_cast<C*>(buf.data());
+};
+
 PYBIND11_MODULE(jruntime, m)
 {
   m.doc() = "J Language Runtime";
 
   py::class_<JST, std::unique_ptr<JST, deleter>>(m, "Session")
-    .def(py::init([]() {
+    .def(py::init([](bool silent) {
            auto jt = JInit();
-           JSMX(jt, nullptr, nullptr, nullptr, nullptr, SMOPTMTH);
+           if (silent)
+             JSMX(jt, nullptr, nullptr, nullptr, nullptr, SMOPTMTH);
+           else
+             JSMX(jt, reinterpret_cast<void*>(+joutput), nullptr,
+                  reinterpret_cast<void*>(+jinput), nullptr, SMOPTMTH);
            return jt;
          }),
-         "Create an empty J session")
+         py::kw_only(), "silent"_a = false, "Create an empty J session")
     .def(
       "runsource",
       [](JST& self, char const* src) {
