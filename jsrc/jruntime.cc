@@ -40,16 +40,28 @@ namespace py = pybind11;
 
 using namespace pybind11::literals;
 
-constexpr auto joutput = [](J, int, C* s) {
-  py::print(reinterpret_cast<char*>(s), "end"_a = "");
+inline auto
+toj(char const* s)
+{
+  return reinterpret_cast<C*>(const_cast<char*>(s));
+}
+
+inline auto
+fromj(C* s)
+{
+  return reinterpret_cast<char*>(s);
+}
+
+static constexpr auto joutput = [](J, int, C* s) {
+  py::print(fromj(s), "end"_a = "");
 };
 
-constexpr auto jinput = [](J jt, C* s) {
+static constexpr auto jinput = [](J jt, C* s) {
   static std::string buf;
   buf.assign(py::module_::import(PYBIND11_BUILTINS_MODULE)
-               .attr("input")(reinterpret_cast<char*>(s))
+               .attr("input")(fromj(s))
                .cast<std::string>());
-  return reinterpret_cast<C*>(buf.data());
+  return toj(buf.data());
 };
 
 PYBIND11_MODULE(jruntime, m)
@@ -70,7 +82,7 @@ PYBIND11_MODULE(jruntime, m)
     .def(
       "runsource",
       [](JST& self, char const* src) {
-        auto r = JDo(&self, reinterpret_cast<C*>(const_cast<char*>(src)));
+        auto r = JDo(&self, toj(src));
         if (r != 0)
           throw system_error(self, r);
       },
