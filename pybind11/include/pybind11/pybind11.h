@@ -21,6 +21,7 @@
 #  pragma warning disable 1875  // offsetof applied to non-POD (Plain Old Data) types is nonstandard
 #  pragma warning disable 2196  // warning #2196: routine is both "inline" and "noinline"
 #elif defined(_MSC_VER)
+#  define strdup _strdup         // The POSIX strdup is deprecated.
 #  pragma warning(push)
 #  pragma warning(disable: 4100) // warning C4100: Unreferenced formal parameter
 #  pragma warning(disable: 4127) // warning C4127: Conditional expression is constant
