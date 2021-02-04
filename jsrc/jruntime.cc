@@ -1,5 +1,7 @@
 #include <complex>
 #include <stdexcept>
+#include <string_view>
+#include <utility>
 
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
@@ -42,6 +44,7 @@ public:
 namespace py = pybind11;
 
 using namespace pybind11::literals;
+using namespace std::literals;
 
 inline auto
 toj(char const* s)
@@ -156,40 +159,54 @@ noun_to_python(I datatype, I rank, I const* shape, void const* data)
   }
 }
 
+static constexpr auto getitem = [](JST& self, char const* name) {
+  I jtype, jrank, jshape, jdata;
+  if (auto r = JGetM(&self, toj(name), &jtype, &jrank, &jshape, &jdata); r != 0)
+    throw system_error(self, r);
+
+  return noun_to_python(jtype, jrank, reinterpret_cast<I*>(jshape),
+                        reinterpret_cast<void*>(jdata));
+};
+
+static constexpr auto runsource = [](JST& self, char const* src) {
+  if (auto r = JDo(&self, toj(src)); r != 0)
+    throw system_error(self, r);
+};
+
+static constexpr auto create = [](bool silent) {
+  auto jt = JInit();
+  if (silent)
+    JSMX(jt, nullptr, nullptr, nullptr, nullptr, SMOPTMTH);
+  else
+    JSMX(jt, reinterpret_cast<void*>(+joutput), nullptr,
+         reinterpret_cast<void*>(+jinput), nullptr, SMOPTMTH);
+  return jt;
+};
+
+static constexpr auto eval = [](JST& self, std::string_view src) {
+  auto cmd = "eval_jpyd_=:"s;
+  cmd += src;
+  runsource(self, cmd.data());
+  struct defer
+  {
+    J jt;
+    ~defer() { JDo(jt, toj("0!:100 '4!:55<''eval_jpyd_'''")); }
+  } _{&self};
+  return getitem(self, "eval_jpyd_");
+};
+
 PYBIND11_MODULE(jruntime, m)
 {
   m.doc() = "J Language Runtime";
 
   py::class_<JST, std::unique_ptr<JST, deleter>>(m, "Session")
-    .def(py::init([](bool silent) {
-           auto jt = JInit();
-           if (silent)
-             JSMX(jt, nullptr, nullptr, nullptr, nullptr, SMOPTMTH);
-           else
-             JSMX(jt, reinterpret_cast<void*>(+joutput), nullptr,
-                  reinterpret_cast<void*>(+jinput), nullptr, SMOPTMTH);
-           return jt;
-         }),
-         py::kw_only(), "silent"_a = false, "Create an empty J session")
-    .def(
-      "__getitem__",
-      [](JST& self, char const* name) {
-        I jtype, jrank, jshape, jdata;
-        if (auto r = JGetM(&self, toj(name), &jtype, &jrank, &jshape, &jdata);
-            r != 0)
-          throw system_error(self, r);
-
-        return noun_to_python(jtype, jrank, reinterpret_cast<I*>(jshape),
-                              reinterpret_cast<void*>(jdata));
-      },
-      "Retrieve J nouns as Python and NumPy objects")
-    .def(
-      "runsource",
-      [](JST& self, char const* src) {
-        if (auto r = JDo(&self, toj(src)); r != 0)
-          throw system_error(self, r);
-      },
-      "sentence"_a.none(false), "Compile and run some sentence in J");
+    .def(py::init(create), py::kw_only(), "silent"_a = false,
+         "Create an empty J session")
+    .def("__getitem__", getitem, "Retrieve J nouns as Python and NumPy objects")
+    .def("runsource", runsource, "sentence"_a.none(false),
+         "Compile and run some sentence in J")
+    .def("eval", eval, "sentence"_a.none(false),
+         "Evaluate a sentence and return its result to Python");
 
   py::register_exception<system_error>(m, "JError", PyExc_RuntimeError);
   m.attr("__version__") = "0.1.0";
