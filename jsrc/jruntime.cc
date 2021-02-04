@@ -12,6 +12,7 @@ extern "C"
 {
 #include "j.h"
 #include "jlib.h"
+#undef move
 }
 
 namespace j {
@@ -112,7 +113,24 @@ noun_to_numpy_str(I rank, I const* shape, void const* data) -> py::object
   return py::module_::import("numpy").attr("str_")(mem, codec_name<T>);
 }
 
+inline auto noun_to_python(I, I, I const*, void const*) -> py::object;
+
 inline auto
+noun_to_tuple(I rank, I const* shape, void const* data)
+{
+  if (rank > 1)
+    throw py::value_error{"cannot convert multidimensional tuple"};
+  auto w = reinterpret_cast<A const*>(data);
+  auto n = rank ? shape[0] : 1;
+  auto tu = py::tuple(n);
+  for (decltype(n) i = 0; i < n; ++i) {
+    auto a = w[i];
+    tu[i] = noun_to_python(AT(a), AR(a), AS(a), AV(a));
+  }
+  return tu;
+}
+
+auto
 noun_to_python(I datatype, I rank, I const* shape, void const* data)
   -> py::object
 {
@@ -128,7 +146,7 @@ noun_to_python(I datatype, I rank, I const* shape, void const* data)
   case CMPXX:
     return noun_to_numpy<std::complex<double>>(rank, shape, data);
   case BOXX:
-    return py::none();
+    return noun_to_tuple(rank, shape, data);
   case C2TX:
     return noun_to_numpy_str<char16_t>(rank, shape, data);
   case C4TX:
@@ -164,7 +182,7 @@ PYBIND11_MODULE(jruntime, m)
         return noun_to_python(jtype, jrank, reinterpret_cast<I*>(jshape),
                               reinterpret_cast<void*>(jdata));
       },
-      "")
+      "Retrieve J nouns as Python and NumPy objects")
     .def(
       "runsource",
       [](JST& self, char const* src) {
