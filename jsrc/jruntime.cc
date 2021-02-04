@@ -76,6 +76,11 @@ template<> inline constexpr auto scalar_type_name<double> = "float64";
 template<>
 inline constexpr auto scalar_type_name<std::complex<double>> = "complex128";
 
+template<class T> inline constexpr auto codec_name = nonesuch{};
+template<> inline constexpr auto codec_name<unsigned char> = "utf-8";
+template<> inline constexpr auto codec_name<char16_t> = "utf-16";
+template<> inline constexpr auto codec_name<char32_t> = "utf-32";
+
 template<class T>
 inline auto
 noun_to_ndarray(I rank, I const* shape, void const* data)
@@ -96,6 +101,17 @@ noun_to_numpy(I rank, I const* shape, void const* data) -> py::object
   }
 }
 
+template<class T>
+inline auto
+noun_to_numpy_str(I rank, I const* shape, void const* data) -> py::object
+{
+  if (rank > 1)
+    throw py::value_error{"cannot convert multidimensional string"};
+  auto n = rank ? shape[0] : 1;
+  auto mem = py::memoryview::from_memory(data, n * sizeof(T));
+  return py::module_::import("numpy").attr("str_")(mem, codec_name<T>);
+}
+
 inline auto
 noun_to_python(I datatype, I rank, I const* shape, void const* data)
   -> py::object
@@ -104,7 +120,7 @@ noun_to_python(I datatype, I rank, I const* shape, void const* data)
   case B01X:
     return noun_to_numpy<bool>(rank, shape, data);
   case LITX:
-    return py::none();
+    return noun_to_numpy_str<unsigned char>(rank, shape, data);
   case INTX:
     return noun_to_numpy<int64_t>(rank, shape, data);
   case FLX:
@@ -114,9 +130,9 @@ noun_to_python(I datatype, I rank, I const* shape, void const* data)
   case BOXX:
     return py::none();
   case C2TX:
-    return py::none();
+    return noun_to_numpy_str<char16_t>(rank, shape, data);
   case C4TX:
-    return py::none();
+    return noun_to_numpy_str<char32_t>(rank, shape, data);
   default:
     throw py::value_error{"unsupported datatype"};
   }
