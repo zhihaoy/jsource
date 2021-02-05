@@ -1,12 +1,13 @@
 /* Copyright 1990-2007, Jsoftware Inc.  All rights reserved.               */
 /* Licensed use only. Any other use is in violation of copyright.          */
 
-CDPROC J _stdcall JInit(void);                         /* init instance */
+CDPROC J _stdcall JInit(void);                     /* init instance */
 CDPROC void _stdcall JSM(J jt, void*callbacks[]);  /* set callbacks */
 CDPROC void _stdcall JSMX(J jt, void*, void*, void*, void*, I);
 CDPROC int _stdcall JDo(J jt,C*);                  /* run sentence */
 CDPROC C* _stdcall JGetLocale(J jt);               /* get locale */
-CDPROC A _stdcall Jga(J jt, I t, I n, I r, I*s);
+CDPROC A _stdcall Jga(J jt, I t, I n, I r, I*s);   /* allocate array */
+CDPROC int _stdcall Jassoc(J jt, C* name, A w);    /* associate name to array */
 CDPROC int _stdcall JFree(J jt);                   /* free instance */
 CDPROC A _stdcall JGetA(J jt,I n,C* name);         /* get 3!:1 from name */
 CDPROC C* _stdcall JGetR(J jt);                    /* get capture */

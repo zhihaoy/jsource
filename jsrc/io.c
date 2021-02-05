@@ -756,6 +756,19 @@ static int setterm(J jt, C* name, I* jtype, I* jrank, I* jshape, I* jdata)
  return jt->jerr;
 }
 
+int _stdcall Jassoc(J jt, C* name, A w)
+{
+ int er;
+ char gn[256];
+ if(FUNC&AT(w)) return EVDOMAIN;
+ // validate name
+ if(strlen(name) >= sizeof(gn)) return EVILNAME;
+ if(valid(name, gn)) return EVILNAME;
+ jt->jerr=0;
+ jset(gn, w);
+ return jt->jerr;
+}
+
 int _stdcall JSetM(J jt, C* name, I* jtype, I* jrank, I* jshape, I* jdata)
 {
  int er;
