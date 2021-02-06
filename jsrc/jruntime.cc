@@ -28,6 +28,8 @@ struct deleter
   void operator()(J p) const noexcept { JFree(p); }
 };
 
+using pointer = std::unique_ptr<JST, deleter>;
+
 class system_error : public std::runtime_error
 {
   int code_;
@@ -339,13 +341,34 @@ static constexpr auto runsource = [](JST& self, char const* src) {
     throw system_error(self, r);
 };
 
-static constexpr auto create = [](bool silent) {
-  auto jt = JInit();
-  if (silent)
-    JSMX(jt, nullptr, nullptr, nullptr, nullptr, SMOPTMTH);
+inline void
+simulate_jfe(JST& self, py::object binpath)
+{
+  auto Path = py::module_::import("pathlib").attr("Path");
+  auto sys = py::module_::import("sys");
+  auto bin = Path(binpath).attr("resolve")();
+
+  setitem(self, "ARGV_z_", py::make_tuple(""_s));
+  setitem(self, "BINPATH_z_", bin.attr("as_posix")());
+  runsource(self, "0!:0<BINPATH,'/profile.ijs'");
+
+  if (sys.attr("stdout").attr("isatty")())
+    runsource(self, "0 0$boxdraw_j_ 0");
   else
-    JSMX(jt, reinterpret_cast<void*>(+joutput), nullptr,
-         reinterpret_cast<void*>(+jinput), nullptr, SMOPTMTH);
+    runsource(self, "0 0$boxdraw_j_ 1");
+}
+
+static constexpr auto create = [](bool silent, py::object binpath) {
+  auto jt = pointer(JInit());
+
+  if (silent)
+    setup(*jt);
+  else
+    setup(*jt, joutput, jinput);
+
+  if (not binpath.is_none())
+    simulate_jfe(*jt, binpath);
+
   return jt;
 };
 
@@ -365,9 +388,9 @@ PYBIND11_MODULE(jruntime, m)
 {
   m.doc() = "J Language Runtime";
 
-  py::class_<JST, std::unique_ptr<JST, deleter>>(m, "Session")
+  py::class_<JST, pointer>(m, "Session")
     .def(py::init(create), py::kw_only(), "silent"_a = false,
-         "Create an empty J session")
+         "binpath"_a = py::none(), "Create an J session which may simulate JFE")
     .def("__getitem__", getitem, "Retrieve J nouns as Python and NumPy objects")
     .def("__setitem__", setitem, "Assign Python and NumPy objects to J nouns")
     .def("runsource", runsource, "sentence"_a.none(false),
