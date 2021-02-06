@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <complex>
+#include <cstring>
 #include <stdexcept>
 #include <string_view>
 #include <utility>
@@ -15,6 +17,8 @@ extern "C"
 #include "j.h"
 #include "jlib.h"
 #undef move
+#undef str
+#undef shape
 }
 
 namespace j {
@@ -73,12 +77,23 @@ static constexpr auto jinput = [](J jt, C* s) {
 struct nonesuch
 {};
 
+template<class... T> struct always_false : std::false_type
+{};
+template<> struct always_false<class dont_use> : std::true_type
+{};
+
 template<class T> inline constexpr auto scalar_type_name = nonesuch{};
 template<> inline constexpr auto scalar_type_name<bool> = "bool_";
 template<> inline constexpr auto scalar_type_name<int64_t> = "int64";
 template<> inline constexpr auto scalar_type_name<double> = "float64";
 template<>
 inline constexpr auto scalar_type_name<std::complex<double>> = "complex128";
+
+template<class T> inline constexpr auto scalar_type_enum = nonesuch{};
+template<> inline constexpr auto scalar_type_enum<bool> = B01;
+template<> inline constexpr auto scalar_type_enum<int64_t> = INT;
+template<> inline constexpr auto scalar_type_enum<double> = FL;
+template<> inline constexpr auto scalar_type_enum<std::complex<double>> = CMPX;
 
 template<class T> inline constexpr auto codec_name = nonesuch{};
 template<> inline constexpr auto codec_name<unsigned char> = "utf-8";
@@ -168,6 +183,157 @@ static constexpr auto getitem = [](JST& self, char const* name) {
                         reinterpret_cast<void*>(jdata));
 };
 
+inline void
+setup(JST& self, outputtype fnout = nullptr, inputtype fnin = nullptr)
+{
+  JSMX(&self, reinterpret_cast<void*>(fnout), nullptr,
+       reinterpret_cast<void*>(fnin), nullptr, SMOPTMTH);
+}
+
+template<class T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
+inline auto
+gc_array(JST& self, I type, I n, I rank, T const* shape)
+{
+  static_assert(std::numeric_limits<T>::digits ==
+                std::numeric_limits<I>::digits);
+
+  if (auto p = Jga(&self, type, n, rank,
+                   reinterpret_cast<I*>(const_cast<T*>(shape)))) {
+    p->c |= ACINPLACE;
+    return p;
+  } else {
+    throw system_error(self, self.jerr);
+  }
+}
+
+inline auto
+gc_array(JST& self, I type, I n)
+{
+  I shape[] = {n};
+  return gc_array(self, type, n, 1, shape);
+}
+
+template<class T>
+inline void
+copy(py::array_t<T> const& a, A w)
+{
+  if constexpr (std::is_same_v<T, bool>)
+    std::copy_n(a.data(), a.size(), BAV(w));
+  else if constexpr (std::is_floating_point_v<T>)
+    std::copy_n(a.data(), a.size(), DAV(w));
+  else if constexpr (std::is_integral_v<T> and std::is_signed_v<T>)
+    std::copy_n(a.data(), a.size(), IAV(w));
+  else if constexpr (py::detail::is_complex<T>())
+    std::transform(a.data(), a.data() + a.size(), ZAV(w), [](auto& cmpx) {
+      return Z{real(cmpx), imag(cmpx)};
+    });
+  else
+    static_assert(always_false<T>(), "no compatible J datatype");
+}
+
+template<class T>
+inline auto
+numpy_to_j(JST& self, py::array& arr)
+{
+  auto w =
+    gc_array(self, scalar_type_enum<T>, arr.size(), arr.ndim(), arr.shape());
+  auto c = arr.dtype().attr("char").cast<char>();
+  switch (c) {
+  case '?':
+    copy<bool>(arr, w);
+    break;
+  case 'b':
+    copy<int8_t>(arr, w);
+    break;
+  case 'h':
+    copy<int16_t>(arr, w);
+    break;
+  case 'l':
+    copy<int32_t>(arr, w);
+    break;
+  case 'q':
+    copy<int64_t>(arr, w);
+    break;
+  case 'f':
+    copy<float>(arr, w);
+    break;
+  case 'd':
+    copy<double>(arr, w);
+    break;
+  case 'F':
+    copy<std::complex<float>>(arr, w);
+    break;
+  case 'D':
+    copy<std::complex<double>>(arr, w);
+    break;
+  default:
+    throw py::value_error{"unrecognized dtype"};
+  }
+  return w;
+}
+
+template<class T>
+inline auto
+numpy_str_to_j(JST& self, py::array& arr)
+{
+  if (arr.ndim() == 0) {
+    auto w = [&] {
+      if constexpr (std::is_same_v<T, unsigned char>)
+        return gc_array(self, LIT, arr.itemsize());
+      else if constexpr (std::is_same_v<T, char32_t>)
+        return gc_array(self, C4T, arr.itemsize() / C4TSIZE);
+    }();
+    std::memcpy(voidAV(w), arr.data(), arr.itemsize());
+    return w;
+  } else {
+    throw py::value_error{"cannot convert ndarray of strings"};
+  }
+}
+
+inline auto
+numpy_to_j(JST& self, py::object& data)
+{
+  auto arr = py::array(data);
+  switch (arr.dtype().kind()) {
+  case 'b':
+    return numpy_to_j<bool>(self, arr);
+  case 'i':
+    return numpy_to_j<int64_t>(self, arr);
+  case 'f':
+    return numpy_to_j<double>(self, arr);
+  case 'c':
+    return numpy_to_j<std::complex<double>>(self, arr);
+  case 'S':
+    return numpy_str_to_j<unsigned char>(self, arr);
+  case 'U':
+    return numpy_str_to_j<char32_t>(self, arr);
+  default:
+    throw py::value_error{"unsupported dtype"};
+  }
+}
+
+inline auto
+object_to_j(JST& self, py::object data) -> A
+{
+  if (py::isinstance<py::tuple>(data)) {
+    auto tu = data.cast<py::tuple>();
+    auto n = len(tu);
+    auto w = gc_array(self, BOX, n);
+    for (decltype(n) i = 0; i < n; ++i)
+      AAV(w)[i] = object_to_j(self, tu[i]);
+    return w;
+  } else {
+    return numpy_to_j(self, data);
+  }
+}
+
+static constexpr auto setitem = [](JST& self, char const* name,
+                                   py::object data) {
+  if (auto r = Jassoc(&self, toj(name), object_to_j(self, std::move(data)));
+      r != 0)
+    throw system_error(self, r);
+};
+
 static constexpr auto runsource = [](JST& self, char const* src) {
   if (auto r = JDo(&self, toj(src)); r != 0)
     throw system_error(self, r);
@@ -203,6 +369,7 @@ PYBIND11_MODULE(jruntime, m)
     .def(py::init(create), py::kw_only(), "silent"_a = false,
          "Create an empty J session")
     .def("__getitem__", getitem, "Retrieve J nouns as Python and NumPy objects")
+    .def("__setitem__", setitem, "Assign Python and NumPy objects to J nouns")
     .def("runsource", runsource, "sentence"_a.none(false),
          "Compile and run some sentence in J")
     .def("eval", eval, "sentence"_a.none(false),
