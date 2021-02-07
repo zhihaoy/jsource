@@ -342,6 +342,18 @@ static constexpr auto runsource = [](JST& self, char const* src) {
 };
 
 inline void
+runsource_(JST& self, std::string const& src)
+{
+  runsource(self, src.data());
+}
+
+inline void
+setitem_(JST& self, std::string const& name, py::object data)
+{
+  setitem(self, name.data(), std::move(data));
+}
+
+inline void
 simulate_jfe(JST& self, py::object binpath)
 {
   auto Path = py::module_::import("pathlib").attr("Path");
@@ -375,7 +387,7 @@ static constexpr auto create = [](bool silent, py::object binpath) {
 static constexpr auto eval = [](JST& self, std::string_view src) {
   auto cmd = "eval_jpyd_=:"s;
   cmd += src;
-  runsource(self, cmd.data());
+  runsource_(self, cmd);
   struct defer
   {
     J jt;
@@ -384,15 +396,48 @@ static constexpr auto eval = [](JST& self, std::string_view src) {
   return getitem(self, "eval_jpyd_");
 };
 
+struct scope
+{
+  // the reference can be dangling if the context manager is __enter__()'ed
+  // after the session object is gone
+  JST& self;
+  py::kwargs kwds;
+
+  void enter()
+  {
+    for (auto& [name, value] : kwds) {
+      setitem_(self, py::reinterpret_borrow<py::str>(name),
+               py::reinterpret_borrow<py::object>(value));
+    }
+  }
+
+  void exit(py::args)
+  {
+    auto cmd = "0!:100 '4!:55<''{}'''"_s;
+    for (auto& [name, _] : kwds)
+      runsource_(self, cmd.format(name));
+  }
+
+  static auto make(JST& self, py::kwargs kwds)
+  {
+    return scope{self, std::move(kwds)};
+  }
+};
+
 PYBIND11_MODULE(jruntime, m)
 {
   m.doc() = "J Language Runtime";
+
+  py::class_<scope>(m, "_Scope", py::module_local())
+    .def("__enter__", &scope::enter)
+    .def("__exit__", &scope::exit);
 
   py::class_<JST, pointer>(m, "Session")
     .def(py::init(create), py::kw_only(), "silent"_a = false,
          "binpath"_a = py::none(), "Create an J session which may simulate JFE")
     .def("__getitem__", getitem, "Retrieve J nouns as Python and NumPy objects")
     .def("__setitem__", setitem, "Assign Python and NumPy objects to J nouns")
+    .def("let", scope::make, "Bind J names to Python values in a scope")
     .def("runsource", runsource, "sentence"_a.none(false),
          "Compile and run some sentence in J")
     .def("eval", eval, "sentence"_a.none(false),
