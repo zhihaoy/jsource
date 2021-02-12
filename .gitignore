@@ -61,6 +61,7 @@ release
 # build folders
 out/
 build/
+dist/
 bin/
 make2/
 /jlibrary/addons
