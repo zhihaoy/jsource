@@ -1,0 +1,37 @@
+package:
+  name: jruntime
+  version: 0.1.0
+
+source:
+  path: ..
+
+build:
+  number: 0
+  script: python -m pip install --no-deps . -v
+
+requirements:
+  build:
+    - cmake >=3.17
+    - ninja
+
+  host:
+    - python {{ python }}
+    - pip
+    - llvm-openmp
+
+  run:
+    - python
+    - numpy
+
+test:
+  imports:
+    - jruntime
+
+about:
+  summary: J Language Runtime
+  license: GPLv3+
+  license_file: license.txt
+
+extra:
+  recipe-maintainers:
+    - zhihao.yuan

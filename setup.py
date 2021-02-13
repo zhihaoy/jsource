@@ -31,6 +31,19 @@ class CMakeBuild(build_ext):
             "-B", self.build_temp,
         ]
 
+        if 'CONDA_BUILD' in os.environ:
+            if not nt:
+                cmake_args += [
+                    "-D",
+                    "CMAKE_EXE_LINKER_FLAGS_INIT=-Wl,-rpath={0} -L{0}".format(
+                        os.path.join(os.environ['PREFIX'], 'lib')
+                    ),
+                    "-D",
+                    "CMAKE_SHARED_LINKER_FLAGS_INIT=-Wl,-rpath={0} -L{0}".format(
+                        os.path.join(os.environ['PREFIX'], 'lib')
+                    ),
+                ]
+
         subprocess.check_call(
             ["cmake", ext.sourcedir] + cmake_args
         )

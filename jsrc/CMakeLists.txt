@@ -278,7 +278,11 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 
 pybind11_add_module(jruntime)
 set_target_properties(jruntime PROPERTIES
-    INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+    INTERPROCEDURAL_OPTIMIZATION_RELEASE ON
+    BUILD_RPATH_USE_ORIGIN TRUE)
+set_property(TARGET jruntime PROPERTY BUILD_RPATH
+    $<$<PLATFORM_ID:Darwin>:@loader_path>
+    $<$<PLATFORM_ID:Linux>:$ORIGIN>)
 target_sources(jruntime PRIVATE
     jlib.h
     jruntime.cc)
