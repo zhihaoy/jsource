@@ -96,7 +96,7 @@ F1(jtfullnamenpy)
   ASSERT(AN(w) - 1, EVLENGTH);
   p = CAV(w);
   ERRZ(realpath(p, dirpath) == NULL);
-  ERRZ(strlcat(dirpath, ".npy", PATH_MAX) != AN(w) + 3);
+  ERRZ(strlcat(dirpath, ".npy", PATH_MAX) < PATH_MAX);
 #endif
   R cstr(dirpath);
 
