@@ -444,7 +444,7 @@ PYBIND11_MODULE(jruntime, m)
          "Evaluate a sentence and return its result to Python");
 
   py::register_exception<system_error>(m, "JError", PyExc_RuntimeError);
-  m.attr("__version__") = "0.1.0";
+  m.attr("__version__") = "0.1.1";
 }
 
 } // namespace j
