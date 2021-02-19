@@ -70,9 +70,14 @@ static constexpr auto joutput = [](J, int, C* s) {
 
 static constexpr auto jinput = [](J jt, C* s) {
   static std::string buf;
-  buf.assign(py::module_::import(PYBIND11_BUILTINS_MODULE)
-               .attr("input")(fromj(s))
-               .cast<std::string>());
+  try {
+    buf.assign(py::module_::import(PYBIND11_BUILTINS_MODULE)
+                 .attr("input")(fromj(s))
+                 .cast<std::string>());
+  } catch (py::error_already_set&) {
+    jt->recurstate = RECSTATEIDLE;
+    throw;
+  }
   return toj(buf.data());
 };
 
