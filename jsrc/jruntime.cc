@@ -369,7 +369,7 @@ simulate_jfe(JST& self, py::object binpath)
   setitem(self, "BINPATH_z_", bin.attr("as_posix")());
   runsource(self, "0!:0<BINPATH,'/profile.ijs'");
 
-  if (sys.attr("stdout").attr("isatty")())
+  if (sys.attr("stdout").attr("isatty")().cast<bool>())
     runsource(self, "0 0$boxdraw_j_ 0");
   else
     runsource(self, "0 0$boxdraw_j_ 1");
