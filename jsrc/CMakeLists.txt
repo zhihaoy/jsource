@@ -247,7 +247,7 @@ if(NOT UNIX OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "^(aarch64|arm)")
     target_link_libraries(jconsole PRIVATE linenoise)
 endif()
 if("${CMAKE_C_COMPILER_FRONTEND_VARIANT}" STREQUAL "MSVC")
-    target_link_options(jconsole PRIVATE /STACK:0x1000000)
+    target_link_options(jconsole PRIVATE /STACK:0x10000000)
 endif()
 target_link_libraries(jconsole PRIVATE ${CMAKE_DL_LIBS})
 target_sources(jconsole PRIVATE
@@ -291,6 +291,9 @@ set_target_properties(jruntime PROPERTIES
 set_property(TARGET jruntime PROPERTY BUILD_RPATH
     $<$<PLATFORM_ID:Darwin>:@loader_path>
     $<$<PLATFORM_ID:Linux>:$ORIGIN>)
+if("${CMAKE_C_COMPILER_FRONTEND_VARIANT}" STREQUAL "MSVC")
+    target_link_options(jruntime PRIVATE /STACK:0x10000000)
+endif()
 target_sources(jruntime PRIVATE
     jlib.h
     jruntime.cc)
