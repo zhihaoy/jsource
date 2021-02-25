@@ -65,12 +65,14 @@ fromj(C* s)
 }
 
 static constexpr auto joutput = [](J, int, C* s) {
+  py::gil_scoped_acquire _;
   py::print(fromj(s), "end"_a = "");
 };
 
 static constexpr auto jinput = [](J jt, C* s) {
   static std::string buf;
   try {
+    py::gil_scoped_acquire _;
     buf.assign(py::module_::import(PYBIND11_BUILTINS_MODULE)
                  .attr("input")(fromj(s))
                  .cast<std::string>());
@@ -368,7 +370,10 @@ simulate_jfe(JST& self, py::object binpath)
 
   setitem(self, "ARGV_z_", py::make_tuple(""_s));
   setitem(self, "BINPATH_z_", bin.attr("as_posix")());
-  runsource(self, "0!:0<BINPATH,'/profile.ijs'");
+  {
+    py::gil_scoped_release _;
+    runsource(self, "0!:0<BINPATH,'/profile.ijs'");
+  }
 
   if (sys.attr("stdout").attr("isatty")().cast<bool>())
     runsource(self, "0 0$boxdraw_j_ 0");
@@ -393,7 +398,10 @@ static constexpr auto create = [](bool silent, py::object binpath) {
 static constexpr auto eval = [](JST& self, std::string_view src) {
   auto cmd = "eval_jpyd_=:"s;
   cmd += src;
-  runsource_(self, cmd);
+  {
+    py::gil_scoped_release _;
+    runsource_(self, cmd);
+  }
   struct defer
   {
     J jt;
@@ -445,6 +453,7 @@ PYBIND11_MODULE(jruntime, m)
     .def("__setitem__", setitem, "Assign Python and NumPy objects to J nouns")
     .def("let", scope::make, "Bind J names to Python values in a scope")
     .def("runsource", runsource, "sentence"_a.none(false),
+         py::call_guard<py::gil_scoped_release>(),
          "Compile and run some sentence in J")
     .def("eval", eval, "sentence"_a.none(false),
          "Evaluate a sentence and return its result to Python");
