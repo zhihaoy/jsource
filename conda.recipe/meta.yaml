@@ -1,6 +1,6 @@
 package:
   name: jruntime
-  version: 0.1.3
+  version: 0.1.4
 
 source:
   path: ..
@@ -29,7 +29,7 @@ test:
 
 about:
   summary: J Language Runtime
-  license: GPLv3+
+  license: GPLv3
   license_file: license.txt
 
 extra:
