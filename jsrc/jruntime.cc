@@ -193,8 +193,9 @@ static constexpr auto getitem = [](JST& self, char const* name) {
 inline void
 setup(JST& self, outputtype fnout = nullptr, inputtype fnin = nullptr)
 {
+  // when setting SMOPTMTH, stack position is reinitialized for each JDo
   JSMX(&self, reinterpret_cast<void*>(fnout), nullptr,
-       reinterpret_cast<void*>(fnin), nullptr, SMOPTMTH);
+       reinterpret_cast<void*>(fnin), nullptr, SMOPTMTH << 8);
 }
 
 template<class T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
