@@ -71,3 +71,4 @@ make2/
 /jlibrary/system/config
 /jlibrary/system/main
 /jlibrary/tools
+venv/

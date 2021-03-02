@@ -1,0 +1,4 @@
+cmake==3.18.4.post1
+ninja==1.10.0.post2
+Sphinx==3.5.1
+sphinx-rtd-theme==0.5.1
