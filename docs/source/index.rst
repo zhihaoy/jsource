@@ -10,11 +10,11 @@ Welcome to jruntime's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   jruntime
 
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
