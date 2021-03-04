@@ -28,7 +28,7 @@ test:
     - jruntime
 
 about:
-  summary: J Language Runtime
+  summary: Python extension that interacts with the J language
   license: GPLv3
   license_file: license.txt
 

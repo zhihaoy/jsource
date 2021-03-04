@@ -1,4 +1,4 @@
-#include <algorithm>
+﻿#include <algorithm>
 #include <complex>
 #include <cstring>
 #include <stdexcept>
@@ -440,7 +440,7 @@ struct scope
 
 PYBIND11_MODULE(jruntime, m)
 {
-  m.doc() = "J Language Runtime";
+  m.doc() = "Python extension that interacts with the J language";
 
   py::class_<scope>(m, "_Scope", py::module_local())
     .def("__enter__", &scope::enter)
@@ -448,17 +448,284 @@ PYBIND11_MODULE(jruntime, m)
 
   py::class_<JST, pointer>(m, "Session")
     .def(py::init(create), py::kw_only(), "silent"_a = false,
-         "binpath"_a = py::none(), "Create an J session which may simulate JFE")
-    .def("__getitem__", getitem, "Retrieve J nouns as Python and NumPy objects")
-    .def("__setitem__", setitem, "Assign Python and NumPy objects to J nouns")
-    .def("let", scope::make, "Bind J names to Python values in a scope")
+         "binpath"_a = py::none(),
+         R"doc(
+         Create a J session
+
+         Associate J's input callback with :py:func:`input` and output
+         callback with :py:func:`print`.
+         If ``binpath`` is :py:data:`None`, the session starts with an
+         empty locale.  Otherwise, the session loads the J standard
+         library from the parent directory of ``binpath`` as if it is
+         a J front-end (jconsole, jqt, etc.).
+
+         Parameters
+         ----------
+         binpath
+             Path-like object that points to the `bin` directory under
+             the J standard library
+         )doc")
+    .def("__getitem__", getitem,
+         R"doc(
+         Retrieve J nouns as Python and NumPy objects
+
+         If ``arg0`` refers to a J noun, determine the Python side
+         types using the following table:
+
+         +--------+------------+-------------------------------------------+
+         | Rank   | J datatype | Python type                               |
+         +========+============+===========================================+
+         | *N*    | boolean    | :py:class:`np.bool_ <numpy.bool_>`        |
+         +--------+------------+-------------------------------------------+
+         | *N*    | integer    | :py:class:`np.int64 <numpy.int_>`         |
+         +--------+------------+-------------------------------------------+
+         | *N*    | floating   | :py:class:`np.float64 <numpy.double>`     |
+         +--------+------------+-------------------------------------------+
+         | *N*    | complex    | :py:class:`np.complex128 <numpy.cdouble>` |
+         +--------+------------+-------------------------------------------+
+         | 0 or 1 | literal    | :py:class:`np.str_ <numpy.str_>`          |
+         +--------+------------+-------------------------------------------+
+         | 0 or 1 | unicode    | :py:class:`np.str_ <numpy.str_>`          |
+         +--------+------------+-------------------------------------------+
+         | 0 or 1 | boxed      | :py:class:`tuple`                         |
+         +--------+------------+-------------------------------------------+
+
+         J literals or Unicode arrays of rank 0 or 1 are converted to
+         :ref:`NumPy scalars <arrays.scalars.built-in>` that act as
+         Python strings.  An unboxed J atom of other types is
+         converted to a NumPy scalar that acts as a 0-dimensional
+         :py:class:`ndarray <numpy.ndarray>`.  A boxed J array of rank
+         0 or 1 is deemed an object of product type and is converted
+         to a tuple recursively.
+
+         Parameters
+         ----------
+         arg0
+             Name of the noun
+
+         Returns
+         -------
+         Union[tuple, numpy.ndarray]
+             The converted object
+
+         Raises
+         ------
+         UnicodeDecodeError
+             If attempts to convert a literal that is not a valid
+             UTF-8 string
+
+         ValueError
+             If attempts to convert a J array of unsupported
+             dimensions or datatypes
+
+         JError
+             If ``arg0`` does not refer to a J noun
+
+         Examples
+         --------
+         >>> j.runsource("foo =: ((<'hello');(3.1415;4j1);i.6)")
+         >>> j['foo']
+         (('hello',), (3.1415, (4+1j)), array([0, 1, 2, 3, 4, 5], dtype=int64))
+         >>> j['bar']
+         Traceback (most recent call last):
+           File "<stdin>", line 1, in <module>
+         jruntime.JError: domain error
+
+         See Also
+         --------
+         :ref:`arrays.scalars`,
+         `noun <https://code.jsoftware.com/wiki/Vocabulary/AET#Noun>`_,
+         `atom <https://code.jsoftware.com/wiki/Vocabulary/AET#Atom>`_,
+         `array <https://code.jsoftware.com/wiki/Vocabulary/AET#Array>`_
+         )doc")
+    .def("__setitem__", setitem, u8R"doc(
+         Assign Python and NumPy objects to J nouns
+
+         Create a J array and assign it to a noun named by the value
+         of ``arg0`` in the J session.  Determine the type of the
+         array using the following table:
+
+         +--------------------------------------------------------+------------+------+
+         | Python types                                           | J datatype | Rank |
+         +========================================================+============+======+
+         | :term:`array_like` object of :py:class:`bool`          | boolean    | *N*  |
+         +--------------------------------------------------------+------------+------+
+         | :term:`array_like` object of :py:class:`numpy.integer` | integer    | *N*  |
+         +--------------------------------------------------------+------------+------+
+         | :term:`array_like` object of :py:class:`float`         | floating   | *N*  |
+         +--------------------------------------------------------+------------+------+
+         | :term:`array_like` object of :py:class:`complex`       | complex    | *N*  |
+         +--------------------------------------------------------+------------+------+
+         | :py:class:`bytes`                                      | literals   | 1    |
+         +--------------------------------------------------------+------------+------+
+         | :py:class:`str`                                        | unicode    | 1    |
+         +--------------------------------------------------------+------------+------+
+         | :py:class:`tuple`                                      | boxed      | 1    |
+         +--------------------------------------------------------+------------+------+
+
+         If ``arg1`` is a tuple, create a boxed array recursively.
+         Otherwise, the Python object to convert should be an
+         :term:`array-like <array_like>` object of a supported
+         :term:`dtype`.  If the object is an :term:`array scalar`,
+         create an unboxed atom; otherwise, the array to make has
+         a rank greater than 0.
+
+         When converting from integers, if the dtype ends up being
+         :py:class:`np.uint64 <numpy.uint>` or :py:class:`object`,
+         they are not supported.  These can happen when converting
+         from :py:class:`int`, which is an integer type of infinite
+         precision in Python.
+
+         Parameters
+         ----------
+         arg0
+             Name for the noun
+         arg1
+             Value for the noun
+
+         Raises
+         ------
+         ValueError
+             If attempts to convert from unsupported :term:`dtype`
+
+         JError
+             If ``arg0`` is not a valid name
+
+         Examples
+         --------
+         >>> j['x'] = (np.arange(12).reshape(3, 4), ('world',), 6-3j)
+         >>> j.runsource('x')
+         ┌─────────┬───────┬────┐
+         │0 1  2  3│┌─────┐│6j_3│
+         │4 5  6  7││world││    │
+         │8 9 10 11│└─────┘│    │
+         └─────────┴───────┴────┘
+         >>> j['y'] = 2 ** 31
+         >>> j.runsource('y')
+         2147483648
+         >>> j['y'] = 2 ** 63
+         Traceback (most recent call last):
+           File "<stdin>", line 1, in <module>
+         ValueError: unsupported dtype
+         )doc")
+    .def("let", scope::make,
+         R"doc(
+         Bind J names to Python values in a scope
+
+         Emulates lexical bindings in other languages, except that
+         the "scope" for J is established using a :ref:`with <with>`
+         statement in Python.
+
+         Parameters
+         ----------
+         kwargs
+             Nouns in name-value pairs
+
+         Returns
+         -------
+         _Scope
+             Context manager that makes each noun in ``kwargs``
+             available in the ``self`` J session until reaching the
+             end of a :ref:`with <with>` statement
+
+         Warning
+         -------
+         Do not enter the scope after the lifetime of ``self`` has
+         ended.
+
+         Examples
+         --------
+         >>> with j.let(v1=np.arange(12).reshape(4, 3) / 2, tag='3x4'):
+         ...     z = j.eval("('sum ',tag);+/ v1")
+         >>> z
+         ('sum 3x4', array([ 9., 11., 13.]))
+         >>> j['v1']
+         Traceback (most recent call last):
+           File "<stdin>", line 1, in <module>
+         jruntime.JError: domain error
+
+         See Also
+         --------
+         `let <https://www.cs.utexas.edu/ftp/garbage/cs345/schintro-v14/schintro_54.html>`_
+         )doc")
     .def("runsource", runsource, "sentence"_a.none(false),
          py::call_guard<py::gil_scoped_release>(),
-         "Compile and run some sentence in J")
-    .def("eval", eval, "sentence"_a.none(false),
-         "Evaluate a sentence and return its result to Python");
+         R"doc(
+         Compile and run some sentence in J
 
-  py::register_exception<system_error>(m, "JError", PyExc_RuntimeError);
+         Execute the J code in ``sentence`` and echo the result,
+         if any, using :py:func:`print`.  If the sentence expects
+         a *body*, iteratively read more lines using :py:func:`input`
+         until encountering a `terminator`.
+
+         Parameters
+         ----------
+         sentence
+             One line of J code
+
+         Raises
+         ------
+         JError
+             If the sentence fail to execute
+
+         Examples
+         --------
+         >>> j.runsource('v =: i.12')
+         >>> j.runsource("f =: 3 : '_5 + x'")
+         >>> j.runsource('f v')
+         _5 _4 _3 _2 _1 0 1 2 3 4 5 6
+         >>> j.runsource('v f')
+         |syntax error
+         |       v f
+         Traceback (most recent call last):
+           File "<stdin>", line 1, in <module>
+         jruntime.JError: syntax error
+
+         See Also
+         --------
+         `Sentences <https://code.jsoftware.com/wiki/Vocabulary/Words#Sentence>`_,
+         `multiline explicit definition <https://code.jsoftware.com/wiki/Vocabulary/cor#Notes>`_
+         )doc")
+    .def("eval", eval, "sentence"_a.none(false),
+         R"doc(
+         Evaluate a sentence and return its result to Python
+
+         Unlike :py:meth:`runsource`, which may echo the result,
+         :py:meth:`eval` returns the results from J to Python as if
+         creating a temporary noun and getting the noun using
+         :py:meth:`__getitem__`.
+         Raises any exception that :py:meth:`runsource` and
+         :py:meth:`__getitem__` may raise.
+
+         Parameters
+         ----------
+         sentence
+             One line of J code
+
+         Returns
+         -------
+         Union[tuple, numpy.ndarray]
+             The converted result object
+
+         Examples
+         --------
+         >>> j.runsource("('matrix';2 2 $ 0.1 0.2 0.3 0.4)")
+         ┌──────┬───────┐
+         │matrix│0.1 0.2│
+         │      │0.3 0.4│
+         └──────┴───────┘
+         >>> j.eval("z =: ('matrix';2 2 $ 0.1 0.2 0.3 0.4)")
+         ('matrix', array([[0.1, 0.2],
+                [0.3, 0.4]]))
+         >>> j.eval('>0 } z')
+         'matrix'
+         >>> j.eval('>1 } z')
+         array([[0.1, 0.2],
+                [0.3, 0.4]])
+         )doc");
+
+  py::register_exception<system_error>(m, "JError", PyExc_RuntimeError).doc() =
+    "Exception raised when the J engine reports an error.";
   m.attr("__version__") = "0.1.4";
 }
 
