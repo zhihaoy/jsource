@@ -534,9 +534,9 @@ PYBIND11_MODULE(jruntime, m)
          See Also
          --------
          :ref:`arrays.scalars`,
-         `noun <https://code.jsoftware.com/wiki/Vocabulary/AET#Noun>`_,
-         `atom <https://code.jsoftware.com/wiki/Vocabulary/AET#Atom>`_,
-         `array <https://code.jsoftware.com/wiki/Vocabulary/AET#Array>`_
+         :j:`noun <AET#Noun>`,
+         :j:`atom <AET#Atom>`,
+         :j:`array <AET#Array>`
          )doc")
     .def("__setitem__", setitem, u8R"doc(
          Assign Python and NumPy objects to J nouns
@@ -683,8 +683,8 @@ PYBIND11_MODULE(jruntime, m)
 
          See Also
          --------
-         `Sentences <https://code.jsoftware.com/wiki/Vocabulary/Words#Sentence>`_,
-         `multiline explicit definition <https://code.jsoftware.com/wiki/Vocabulary/cor#Notes>`_
+         :j:`Sentences <Words#Sentence>`,
+         :j:`multiline explicit definition <cor#Notes>`
          )doc")
     .def("eval", eval, "sentence"_a.none(false),
          R"doc(

@@ -30,11 +30,16 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.extlinks',
 ]
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
+}
+
+extlinks = {
+    'j': ('https://code.jsoftware.com/wiki/Vocabulary/%s', 'Vocabulary/'),
 }
 
 # Add any paths that contain templates here, relative to this directory.
