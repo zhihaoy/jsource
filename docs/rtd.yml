@@ -1,0 +1,7 @@
+name: rtd
+dependencies:
+  - python=3.8
+  - clangxx=10.0.1
+  - conda-forge::libcxx=10.0.1
+  - cmake=3.19.6
+  - ninja=1.10.2

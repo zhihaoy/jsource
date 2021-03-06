@@ -17,7 +17,6 @@ class CMakeBuild(build_ext):
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
 
         nt = os.name == 'nt'
-        cfg = "Debug" if self.debug else "Release"
 
         cmake_args = [
             "-G", "Ninja",
@@ -27,9 +26,18 @@ class CMakeBuild(build_ext):
             "-D", "CMAKE_RUNTIME_OUTPUT_DIRECTORY={}".format(extdir),
             "-D", "Python_EXECUTABLE={}".format(sys.executable),
             "-D", "BUILD_TESTING=OFF",
-            "-D", "CMAKE_BUILD_TYPE={}".format(cfg),
             "-B", self.build_temp,
         ]
+
+        if 'READTHEDOCS' not in os.environ:
+            cmake_args += [
+                "-D",
+                "CMAKE_BUILD_TYPE={}".format("Debug" if self.debug else "Release"),
+            ]
+        else:
+            cmake_args += [
+                "-DCMAKE_CXX_FLAGS=-stdlib=libc++",
+            ]
 
         if 'CONDA_BUILD' in os.environ:
             if not nt:
