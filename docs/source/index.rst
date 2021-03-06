@@ -2,6 +2,7 @@
    :hidden:
 
    jruntime
+   build
 
 .. include:: README.rst
 
