@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <charconv>
 #include <cstdint>
+#include <cstdio>
 #include <tuple>
 
 #include "dragonbox/dragonbox.h"
@@ -108,5 +109,5 @@ dtoafixed(int64_t len, unsigned char *buf, double x, int64_t precision)
     "%.7g",  "%.8g",  "%.9g",  "%.10g", "%.11g", "%.12g", "%.13g",
     "%.14g", "%.15g", "%.16g", "%.17g", "%.18g", "%.19g", "%.20g",
   };
-  snprintf(p, len, fmt[precision], x);
+  std::snprintf(p, len, fmt[precision], x);
 }
