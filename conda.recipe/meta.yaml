@@ -1,6 +1,6 @@
 package:
   name: jruntime
-  version: 0.1.4
+  version: 0.2.0
 
 source:
   path: ..
@@ -29,6 +29,9 @@ test:
 
 about:
   summary: Python extension that interacts with the J language
+  description: |
+    Jruntime is a modern Python extension that interacts with the J language.
+    It provides deep integration between Python and J.
   license: GPLv3
   license_file: license.txt
 

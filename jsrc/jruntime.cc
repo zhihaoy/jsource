@@ -726,7 +726,7 @@ PYBIND11_MODULE(jruntime, m)
 
   py::register_exception<system_error>(m, "JError", PyExc_RuntimeError).doc() =
     "Exception raised when the J engine reports an error.";
-  m.attr("__version__") = "0.1.4";
+  m.attr("__version__") = "0.2.0";
 }
 
 } // namespace j
